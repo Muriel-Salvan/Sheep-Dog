@@ -1,0 +1,18 @@
+-- This file is best viewed when processed by rdoc.
+++
+
+= Sheep Dog
+
+Simple command line tool that monitors files and processes and sends notifications or take corrective actions when problems arise. Monitor log files for errors, processes CPU and memory consumption (can kill if exceeding), respawn dead processes.
+
+== Where is the documentation ?
+
+Check the website at http://sheepdogsys.sourceforge.net
+
+== Who wrote it ?
+
+Check the AUTHORS[link:files/AUTHORS.html] file.
+
+== What is the license ?
+
+You can find out in the LICENSE[link:files/LICENSE.html] file.

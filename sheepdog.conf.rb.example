@@ -1,0 +1,98 @@
+{
+
+  # The working directory, where SheepDog keeps reports waiting to be sent for notification and its private database
+  :WorkingDir => '/my/home/sheepdog_work',
+
+  # Define notifiers
+  :Notifiers => {
+
+    'Mail' => {
+      :Type => 'SendMail',
+      :SMTP => {
+        :address => 'localhost',
+        :port => 25,
+        :domain => 'mail.domain.com',
+        :user_name => 'smtpuser',
+        :password => 'password',
+        :authentication => nil,
+        :enable_starttls_auto => false
+      },
+      :From => 'SheepDog@domain.com',
+      :To => 'Admin@domain.com'
+    }
+
+  },
+
+  # Monitor
+  :Monitors => {
+
+    # Monitor production log file of Rails
+    'RailsLog' => {
+      :Type => 'LogFile',
+      :Notifiers => {
+        'Mail' => {
+          :Type => 'Mail',
+          :GroupReports => {
+            :Interval_Secs => 60*60*24
+          },
+          :Title => 'Rails production log file',
+          :GroupWithOtherMonitors => true
+        }
+      },
+
+      :FileName => '/my/home/rails/log/production.log',
+      :Filters => [
+        /Error/
+      ]
+    },
+
+    # Monitor StatsCollect process
+    'StatsCollect' => {
+      :Type => 'Process',
+      :Notifiers => {
+        'Mail' => {
+          :Type => 'Mail',
+          :Title => 'StatsCollect process',
+          :GroupWithOtherMonitors => true
+        }
+      },
+
+      :Processes => [
+        {
+          :UserFilter => /username/,
+          :NameFilter => /StatsCollect\.rb/
+        }
+      ],
+      :Limits => {
+        :CPUPercent => 5,
+        :MemPercent => 5,
+        :VirtualMemSize => 16777216
+      },
+      :ActionAboveLimits => :Kill
+    },
+
+    # Monitor the mongrel server
+    'Mongrel' => {
+      :Type => 'Process',
+      :Notifiers => {
+        'Mail' => {
+          :Type => 'Mail',
+          :Title => 'Mongrel server',
+          :GroupWithOtherMonitors => true
+        }
+      },
+
+      :Processes => [
+        {
+          :UserFilter => /mongreluser/,
+          :NameFilter => /mongrel_rails start/
+        }
+      ],
+      :ExecuteIfMissing => {
+        :CmdLine => '/usr/bin/ruby /usr/bin/mongrel_rails start -p 12004 -d -e production -P log/mongrel.pid',
+        :Pwd => '/my/home/rails'
+      }
+    }
+
+  }
+}
