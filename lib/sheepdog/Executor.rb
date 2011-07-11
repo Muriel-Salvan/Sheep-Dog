@@ -5,6 +5,7 @@
 
 require 'time'
 require 'fileutils'
+require 'sheepdog/Common'
 require 'sheepdog/Report'
 
 module SheepDog

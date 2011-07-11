@@ -19,11 +19,12 @@ module SheepDog
         lMessage = nil
         if (iLstReports.size > 1)
           lTitle = "#{iLstReports.size} reports"
+          lMessage = ''
           iLstReports.each_with_index do |iReport, iIdx|
-            lMessage = "===============================================\n"
+            lMessage << "===============================================\n"
             lMessage << "========== Report #{iIdx+1} (#{iReport.CreationTime.utc.strftime('%Y-%m-%d %H:%M:%S')} UTC from #{iReport.ReportFileName}): #{iReport.Title}\n"
             lMessage << iReport.getSimpleText
-            lMessage << "===============================================\n\n"
+            lMessage << "\n===============================================\n\n"
           end
         else
           lReport = iLstReports.first

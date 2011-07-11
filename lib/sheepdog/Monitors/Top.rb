@@ -12,6 +12,8 @@ module SheepDog
 
     class Top
 
+      include SheepDog::Common
+
       # Execute the monitoring process for a given configuration
       #
       # Parameters:
@@ -41,18 +43,7 @@ module SheepDog
           if (lMatch == nil)
             report "Unable to decode top output for memory: \"#{lLine}\"."
           else
-            lMemUsed, lMemFree = lMatch[1..2].map do |iStrValue|
-              rValue = nil
-              # Convert k and m modifiers
-              if (iStrValue[-1..-1] == 'k')
-                rValue = iStrValue[0..-2].to_i * 1024
-              elsif (iStrValue[-1..-1] == 'm')
-                rValue = iStrValue[0..-2].to_i * 1024 * 1024
-              else
-                rValue = iStrValue[0..-2].to_i
-              end
-              next rValue
-            end
+            lMemUsed, lMemFree = lMatch[1..2].map { |iStrValue| quantity2Int(iStrValue) }
             if ((iConf[:Limits][:Memory][:MaxUsed] != nil) and
                 (lMemUsed > iConf[:Limits][:Memory][:MaxUsed]))
               report "Used memory exceed maximal limit: #{lMemUsed} > #{iConf[:Limits][:Memory][:MaxUsed]}"

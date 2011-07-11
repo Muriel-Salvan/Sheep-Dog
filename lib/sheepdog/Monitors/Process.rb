@@ -60,7 +60,7 @@ module SheepDog
           # map< Integer, nil >
           lAboveLimitsPIDs = {}
           lLstPIDs.each do |iPID|
-            lCPUPercent, lMemPercent, lVirtualSize = getPIDMetrics(iPID)
+            lCPUPercent, lMemPercent, lVirtualSize, lResidentSize = getPIDMetrics(iPID)
             # Challenge metrics against limits
             if ((iConf[:Limits].has_key?(:CPUPercent)) and
                 (lCPUPercent > iConf[:Limits][:CPUPercent]))
@@ -77,6 +77,11 @@ module SheepDog
               report "PID #{iPID} exceeds virtual mem size limit: #{lVirtualSize} > #{iConf[:Limits][:VirtualMemSize]}"
               lAboveLimitsPIDs[iPID] = nil
             end
+            if ((iConf[:Limits].has_key?(:ResidentMemSize)) and
+                (lResidentSize > iConf[:Limits][:ResidentMemSize]))
+              report "PID #{iPID} exceeds resident mem size limit: #{lResidentSize} > #{iConf[:Limits][:ResidentMemSize]}"
+              lAboveLimitsPIDs[iPID] = nil
+            end
           end
           if (!lAboveLimitsPIDs.empty?)
             # What to do with PIDs exceeding limits ?
@@ -91,6 +96,8 @@ module SheepDog
 
       private
 
+      include SheepDog::Common
+
       # Get metrics of a PID
       #
       # Parameters:
@@ -99,6 +106,7 @@ module SheepDog
       # * _Float_: The CPU percentage
       # * _Float_: The mem percentage
       # * _Integer_: The total virtual memory size
+      # * _Integer_: The total resident memory size
       def getPIDMetrics(iPID)
         rCPUPercent = nil
         rMemPercent = nil
@@ -106,11 +114,13 @@ module SheepDog
 
         # From top
         lTopOutput = `top -n1 -p#{iPID} -b | tail -2 | head -1`.strip
-        lMatch = lTopOutput.match(/^\d+\s+\S+\s+\d+\s+\d+\s+\S+\s+\S+\s+\d+\s+\S+\s+(\S+)\s+(\S+)\s+\S+\s+.+$/)
+        lMatch = lTopOutput.match(/^\d+\s+\S+\s+\d+\s+\d+\s+\S+\s+(\S+)\s+\d+\s+\S+\s+(\S+)\s+(\S+)\s+\S+\s+.+$/)
         if (lMatch == nil)
           report "Unable to decode top output for PID #{iPID}: \"#{lTopOutput}\""
         else
-          rCPUPercent, rMemPercent = lMatch[1..2].map { |iStrValue| iStrValue.to_f }
+          # Convert RES column to integer
+          rRESValue = quantity2Int(lMatch[1])
+          rCPUPercent, rMemPercent = lMatch[2..3].map { |iStrValue| iStrValue.to_f }
         end
         # From proc/<PID>/stat
         lStatOutput = `cat /proc/#{iPID}/stat`.strip
@@ -121,7 +131,7 @@ module SheepDog
           rVS = lMatch[1].to_i
         end
 
-        return rCPUPercent, rMemPercent, rVS
+        return rCPUPercent, rMemPercent, rVS, rRESValue
       end
 
     end
