@@ -41,16 +41,20 @@ module SheepDog
               iFile.seek(lStartPos)
               iFile.read.split("\n").each do |iLine|
                 # Match the line against filters
-                lMatch = false
-                iConf[:Filters].each do |iFilter|
-                  if (iLine.match(iFilter) != nil)
-                    lMatch = true
-                    break
-                  end
-                end
-                if (lMatch)
-                  # Report this line
+                if (iConf[:Filters] == nil)
                   report iLine
+                else
+                  lMatch = false
+                  iConf[:Filters].each do |iFilter|
+                    if (iLine.match(iFilter) != nil)
+                      lMatch = true
+                      break
+                    end
+                  end
+                  if (lMatch)
+                    # Report this line
+                    report iLine
+                  end
                 end
               end
               lReadValues[:LastPos] = iFile.pos

@@ -92,6 +92,25 @@
         :CmdLine => '/usr/bin/ruby /usr/bin/mongrel_rails start -p 12004 -d -e production -P log/mongrel.pid',
         :Pwd => '/my/home/rails'
       }
+    },
+
+    # Monitor global top values
+    'TopValues' => {
+      :Type => 'Top',
+      :Notifiers => {
+        'Mail' => {
+          :Type => 'Mail',
+          :Title => 'top values',
+          :GroupWithOtherMonitors => true
+        }
+      },
+      :Limits => {
+        :Loads => [ 2.00, 1.50, nil ],
+        :Memory => {
+          :MaxUsed => 4000000000,
+          :MinFree => 400000000
+        }
+      }
     }
 
   }
