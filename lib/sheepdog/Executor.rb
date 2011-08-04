@@ -50,125 +50,73 @@ module SheepDog
       lDelayedReports = {}
       # Loop through the objects to monitor
       iConf[:Monitors].each do |iMonitorName, iMonitorInfo|
-        # Check that it is a known monitor, by accessing the plugin
-        lMonitorPluginInstance, lError = getPluginInstance('Monitors', iMonitorInfo[:Type])
-        if (lMonitorPluginInstance == nil)
-          # Unknown monitor
-          logErr "Unknown Monitor #{iMonitorInfo[:Type]}: #{lError}. Ignoring corresponding monitoring process. Please check configuration."
-        else
-          # Create the report to be filled by this process
-          lReport = Report.new
-          # Create the monitor configuration dir
-          lMonitorDir = "#{iConf[:WorkingDir]}/#{iMonitorName}"
-          FileUtils::mkdir_p(lMonitorDir)
-          # Set instance variables and methods for this monitor
-          lMonitorPluginInstance.instance_variable_set(:@SheepDogConf, iConf)
-          lMonitorPluginInstance.instance_variable_set(:@Report, lReport)
-          lMonitorPluginInstance.instance_variable_set(:@MonitorDir, lMonitorDir)
-          if (!lMonitorPluginInstance.respond_to?(:report))
-            # Report an entry
-            #
-            # Parameters:
-            # * *iEntry* (_String_): Entry to be reported
-            def lMonitorPluginInstance.report(iEntry)
-              @Report.addEntry(iEntry)
-              logInfo "Report: #{iEntry}"
+        # First check if conditions are met
+        if ((iMonitorInfo[:Conditions] == nil) or
+            (checkConditions(iMonitorInfo[:Conditions])))
+          # Check that it is a known monitor, by accessing the plugin
+          lMonitorPluginInstance, lError = getPluginInstance('Monitors', iMonitorInfo[:Type])
+          if (lMonitorPluginInstance == nil)
+            # Unknown monitor
+            logErr "Unknown Monitor #{iMonitorInfo[:Type]}: #{lError}. Ignoring corresponding monitoring process. Please check configuration."
+          else
+            # Create the report to be filled by this process
+            lReport = Report.new
+            # Create the monitor configuration dir
+            lMonitorDir = "#{iConf[:WorkingDir]}/#{iMonitorName}"
+            FileUtils::mkdir_p(lMonitorDir)
+            # Set instance variables and methods for this monitor
+            lMonitorPluginInstance.instance_variable_set(:@SheepDogConf, iConf)
+            lMonitorPluginInstance.instance_variable_set(:@Report, lReport)
+            lMonitorPluginInstance.instance_variable_set(:@MonitorDir, lMonitorDir)
+            if (!lMonitorPluginInstance.respond_to?(:report))
+              # Report an entry
+              #
+              # Parameters:
+              # * *iEntry* (_String_): Entry to be reported
+              def lMonitorPluginInstance.report(iEntry)
+                @Report.addEntry(iEntry)
+                logInfo "Report: #{iEntry}"
+              end
             end
-          end
-          # Call this monitor
-          begin
-            logInfo "Executing monitoring process #{iMonitorName} ..."
-            lMonitorPluginInstance.execute(iMonitorInfo)
-          rescue Exception
-            logErr "Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
-            report "!!! Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
-          end
-          # If this report is not empty, save it in a file
-          lCurrentReportFileName = nil
-          lCurrentReportTime = nil
-          if (!lReport.empty?)
-            lCurrentReportTime = Time.now.utc
-            lCurrentReportFileName = "#{lMonitorDir}/Report_#{lCurrentReportTime.strftime('%Y-%m-%d-%H-%M-%S')}"
-            File.open(lCurrentReportFileName, 'w') do |oFile|
-              oFile.write(Marshal.dump(lReport))
+            # Call this monitor
+            begin
+              logInfo "Executing monitoring process #{iMonitorName} ..."
+              lMonitorPluginInstance.execute(iMonitorInfo)
+            rescue Exception
+              logErr "Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
+              report "!!! Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
             end
-          end
-          # Get the list of reports to send, per time
-          # map< Time, FileName >
-          lReportFiles = {}
-          Dir.glob("#{lMonitorDir}/Report_*").each do |iReportFile|
-            lMatch = File.basename(iReportFile).match(/^Report_(\d\d\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)$/)
-            if (lMatch == nil)
-              logErr "Invalid file report name: #{iReportFile}. Ignoring it."
-            else
-              lReportFiles[Time.parse("#{lMatch[1]}-#{lMatch[2]}-#{lMatch[3]} #{lMatch[4]}:#{lMatch[5]}:#{lMatch[6]} UTC")] = iReportFile
+            # If this report is not empty, save it in a file
+            lCurrentReportFileName = nil
+            lCurrentReportTime = nil
+            if (!lReport.empty?)
+              lCurrentReportTime = Time.now.utc
+              lCurrentReportFileName = "#{lMonitorDir}/Report_#{lCurrentReportTime.strftime('%Y-%m-%d-%H-%M-%S')}"
+              File.open(lCurrentReportFileName, 'w') do |oFile|
+                oFile.write(Marshal.dump(lReport))
+              end
             end
-          end
-          # For each report file, compute the list of notifiers that will send it
-          if (!lReportFiles.empty?)
-            # There are some report files to be (maybe) sent.
-            # Loop through the notifiers.
-            iMonitorInfo[:Notifiers].each do |iNotifierName, iNotifierConf|
-              lNotifierID = iNotifierConf[:Type]
-              if (iNotifierConf[:GroupReports] == nil)
-                # Send the report now if it exists
-                if (lCurrentReportFileName != nil)
-                  # Send [iMonitorInfo, [lCurrentReportFileName]] to iNotifierName
-                  if (iNotifierConf[:GroupWithOtherMonitors] == true)
-                    if (lGroupedMonitorReports[lNotifierID] == nil)
-                      lGroupedMonitorReports[lNotifierID] = {}
-                    end
-                    if (lGroupedMonitorReports[lNotifierID][iMonitorName] == nil)
-                      lGroupedMonitorReports[lNotifierID][iMonitorName] = []
-                    end
-                    lGroupedMonitorReports[lNotifierID][iMonitorName] << [ iNotifierConf, [ lCurrentReportFileName ] ]
-                  else
-                    notify(iConf, {lNotifierID => {iMonitorName => [ [ iNotifierConf, [lCurrentReportFileName] ] ] }}, lDelayedReports)
-                  end
-                  lSentReports[lCurrentReportFileName] = nil
-                  # Remember last report sent
-                  if (lDatabase[:LastReportsSent][iMonitorName] == nil)
-                    lDatabase[:LastReportsSent][iMonitorName] = {}
-                  end
-                  lDatabase[:LastReportsSent][iMonitorName][iNotifierName] = lCurrentReportTime
-                end
+            # Get the list of reports to send, per time
+            # map< Time, FileName >
+            lReportFiles = {}
+            Dir.glob("#{lMonitorDir}/Report_*").each do |iReportFile|
+              lMatch = File.basename(iReportFile).match(/^Report_(\d\d\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)$/)
+              if (lMatch == nil)
+                logErr "Invalid file report name: #{iReportFile}. Ignoring it."
               else
-                # Get the interval in seconds
-                lSecsInterval = getSecsInterval(iNotifierConf[:GroupReports])
-                # Maybe we don't want to send reports now
-                # Get the last time we sent reports for this one
-                if ((lDatabase[:LastReportsSent][iMonitorName] != nil) and
-                    (lDatabase[:LastReportsSent][iMonitorName][iNotifierName] != nil) and
-                    ((Time.now.utc - lDatabase[:LastReportsSent][iMonitorName][iNotifierName]) < lSecsInterval))
-                  # Reports from last one sent to the most recent one are marked to be sent later
-                  lReportFiles.each do |iReportTime, iReportFileName|
-                    if (iReportTime > lDatabase[:LastReportsSent][iMonitorName][iNotifierName])
-                      # This report will be sent another time
-                      lDelayedReports[iReportFileName] = nil
-                    end
-                  end
-                else
-                  # Send all corresponding reports now
-                  lLastReportSentDate = nil
-                  if ((lDatabase[:LastReportsSent][iMonitorName] != nil) and
-                      (lDatabase[:LastReportsSent][iMonitorName][iNotifierName] != nil))
-                    lLastReportSentDate = lDatabase[:LastReportsSent][iMonitorName][iNotifierName]
-                  else
-                    lLastReportSentDate = Time.parse('1970-01-01 00:00:00 UTC')
-                  end
-                  lReportFilesToSend = []
-                  lLastReportTime = Time.parse('1970-01-01 00:00:00 UTC')
-                  lReportFiles.each do |iReportTime, iReportFileName|
-                    if (iReportTime > lLastReportSentDate)
-                      lReportFilesToSend << iReportFileName
-                      lSentReports[iReportFileName] = nil
-                      if (iReportTime > lLastReportTime)
-                        lLastReportTime = iReportTime
-                      end
-                    end
-                  end
-                  if (!lReportFilesToSend.empty?)
-                    # Send [iMonitorInfo, lReportFilesToSend] to iNotifierName
+                lReportFiles[Time.parse("#{lMatch[1]}-#{lMatch[2]}-#{lMatch[3]} #{lMatch[4]}:#{lMatch[5]}:#{lMatch[6]} UTC")] = iReportFile
+              end
+            end
+            # For each report file, compute the list of notifiers that will send it
+            if (!lReportFiles.empty?)
+              # There are some report files to be (maybe) sent.
+              # Loop through the notifiers.
+              iMonitorInfo[:Notifiers].each do |iNotifierName, iNotifierConf|
+                lNotifierID = iNotifierConf[:Type]
+                if (iNotifierConf[:GroupReports] == nil)
+                  # Send the report now if it exists
+                  if (lCurrentReportFileName != nil)
+                    # Send [iMonitorInfo, [lCurrentReportFileName]] to iNotifierName
                     if (iNotifierConf[:GroupWithOtherMonitors] == true)
                       if (lGroupedMonitorReports[lNotifierID] == nil)
                         lGroupedMonitorReports[lNotifierID] = {}
@@ -176,15 +124,71 @@ module SheepDog
                       if (lGroupedMonitorReports[lNotifierID][iMonitorName] == nil)
                         lGroupedMonitorReports[lNotifierID][iMonitorName] = []
                       end
-                      lGroupedMonitorReports[lNotifierID][iMonitorName] << [ iNotifierConf, lReportFilesToSend ]
+                      lGroupedMonitorReports[lNotifierID][iMonitorName] << [ iNotifierConf, [ lCurrentReportFileName ] ]
                     else
-                      notify(iConf, {lNotifierID => {iMonitorName => [ [ iNotifierConf, lReportFilesToSend ] ]}}, lDelayedReports)
+                      notify(iConf, {lNotifierID => {iMonitorName => [ [ iNotifierConf, [lCurrentReportFileName] ] ] }}, lDelayedReports)
                     end
+                    lSentReports[lCurrentReportFileName] = nil
                     # Remember last report sent
                     if (lDatabase[:LastReportsSent][iMonitorName] == nil)
                       lDatabase[:LastReportsSent][iMonitorName] = {}
                     end
-                    lDatabase[:LastReportsSent][iMonitorName][iNotifierName] = lLastReportTime
+                    lDatabase[:LastReportsSent][iMonitorName][iNotifierName] = lCurrentReportTime
+                  end
+                else
+                  # Get the interval in seconds
+                  lSecsInterval = getSecsInterval(iNotifierConf[:GroupReports])
+                  # Maybe we don't want to send reports now
+                  # Get the last time we sent reports for this one
+                  if ((lDatabase[:LastReportsSent][iMonitorName] != nil) and
+                      (lDatabase[:LastReportsSent][iMonitorName][iNotifierName] != nil) and
+                      ((Time.now.utc - lDatabase[:LastReportsSent][iMonitorName][iNotifierName]) < lSecsInterval))
+                    # Reports from last one sent to the most recent one are marked to be sent later
+                    lReportFiles.each do |iReportTime, iReportFileName|
+                      if (iReportTime > lDatabase[:LastReportsSent][iMonitorName][iNotifierName])
+                        # This report will be sent another time
+                        lDelayedReports[iReportFileName] = nil
+                      end
+                    end
+                  else
+                    # Send all corresponding reports now
+                    lLastReportSentDate = nil
+                    if ((lDatabase[:LastReportsSent][iMonitorName] != nil) and
+                        (lDatabase[:LastReportsSent][iMonitorName][iNotifierName] != nil))
+                      lLastReportSentDate = lDatabase[:LastReportsSent][iMonitorName][iNotifierName]
+                    else
+                      lLastReportSentDate = Time.parse('1970-01-01 00:00:00 UTC')
+                    end
+                    lReportFilesToSend = []
+                    lLastReportTime = Time.parse('1970-01-01 00:00:00 UTC')
+                    lReportFiles.each do |iReportTime, iReportFileName|
+                      if (iReportTime > lLastReportSentDate)
+                        lReportFilesToSend << iReportFileName
+                        lSentReports[iReportFileName] = nil
+                        if (iReportTime > lLastReportTime)
+                          lLastReportTime = iReportTime
+                        end
+                      end
+                    end
+                    if (!lReportFilesToSend.empty?)
+                      # Send [iMonitorInfo, lReportFilesToSend] to iNotifierName
+                      if (iNotifierConf[:GroupWithOtherMonitors] == true)
+                        if (lGroupedMonitorReports[lNotifierID] == nil)
+                          lGroupedMonitorReports[lNotifierID] = {}
+                        end
+                        if (lGroupedMonitorReports[lNotifierID][iMonitorName] == nil)
+                          lGroupedMonitorReports[lNotifierID][iMonitorName] = []
+                        end
+                        lGroupedMonitorReports[lNotifierID][iMonitorName] << [ iNotifierConf, lReportFilesToSend ]
+                      else
+                        notify(iConf, {lNotifierID => {iMonitorName => [ [ iNotifierConf, lReportFilesToSend ] ]}}, lDelayedReports)
+                      end
+                      # Remember last report sent
+                      if (lDatabase[:LastReportsSent][iMonitorName] == nil)
+                        lDatabase[:LastReportsSent][iMonitorName] = {}
+                      end
+                      lDatabase[:LastReportsSent][iMonitorName][iNotifierName] = lLastReportTime
+                    end
                   end
                 end
               end
@@ -214,6 +218,33 @@ module SheepDog
     end
 
     private
+
+    # Check conditions
+    #
+    # Parameters:
+    # * *iConditions* (<em>map<Symbol,Object></em>): The conditions to check
+    # Return:
+    # * _Boolean_: Are the conditions respected ?
+    def checkConditions(iConditions)
+      rPassed = true
+
+      if (iConditions[:TimeRanges] != nil)
+        require 'time'
+        # If current time falls into at least 1 range of the list, it's ok.
+        lNow = Time.parse(Time.now.utc.strftime('2001-01-01 %H:%m:%S UTC')).utc
+        rPassed = false
+        iConditions[:TimeRanges].each do |iTimeRangeInfo|
+          iBeginTime, iEndTime = iTimeRangeInfo.map { |iStrTime| Time.parse("2001-01-01 #{iStrTime}").utc }
+          rPassed = ((lNow >= iBeginTime) and
+                     (lNow <= iEndTime))
+          if (rPassed)
+            break
+          end
+        end
+      end
+
+      return rPassed
+    end
 
     # Process notifications to be sent.
     #
