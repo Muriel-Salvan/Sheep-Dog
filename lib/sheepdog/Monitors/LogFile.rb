@@ -18,7 +18,12 @@ module SheepDog
         lReadValuesFileName = "#{@MonitorDir}/ReadValues"
         lReadValues = nil
         if (File.exists?(lReadValuesFileName))
-          lReadValues = Marshal.load(File.read(lReadValuesFileName))
+          begin
+            lReadValues = Marshal.load(File.read(lReadValuesFileName))
+          rescue Exception
+            report "Error while reading previously read values: #{$!}"
+            lReadValues = nil
+          end
         else
           lReadValues = {
             :LastPos => 0,
