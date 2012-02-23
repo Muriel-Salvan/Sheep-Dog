@@ -14,7 +14,7 @@ module SheepDog
       # Parameters::
       # * *iConf* (<em>map<Symbol,Object></em>): The notifier config
       # * *iLstReports* (<em>list<Report></em>): List of reports to notify
-      def sendNotification(iConf, iLstReports)
+      def send_notification(iConf, iLstReports)
         lTitle = nil
         lMessage = nil
         if (iLstReports.size > 1)

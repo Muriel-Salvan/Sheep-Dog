@@ -290,7 +290,7 @@ module SheepDog
             end
             begin
               log_info "===== Send notification to #{iNotifierName} of #{lLstReports.size} reports..."
-              iNotifierPlugin.sendNotification(iConf[:Notifiers][iNotifierName], lLstReports)
+              iNotifierPlugin.send_notification(iConf[:Notifiers][iNotifierName], lLstReports)
             rescue Exception
               log_err "Exception while sending notification from #{iNotifierName} for reports #{lReportFilesSet.keys.join(', ')}: #{$!}.\n#{$!.backtrace.join("\n")}"
               ioErrorReports.merge!(lReportFilesSet)
