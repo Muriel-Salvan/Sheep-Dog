@@ -1,6 +1,3 @@
--- This file is best viewed when processed by rdoc.
-++
-
 = Sheep Dog
 
 Simple command line tool that monitors files and processes and sends notifications or take corrective actions when problems arise. Monitor log files for errors, processes CPU and memory consumption (can kill if exceeding), respawn dead processes.
