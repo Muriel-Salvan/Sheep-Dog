@@ -1,10 +1,10 @@
 #--
-# Copyright (c) 2011 Muriel Salvan (murielsalvan@users.sourceforge.net)
+# Copyright (c) 2011 - 2012 Muriel Salvan (muriel@x-aeon.com)
 # Licensed under the terms specified in LICENSE file. No warranty is provided.
 #++
 
 require 'rUtilAnts/Misc'
-RUtilAnts::Misc::initializeMisc
+RUtilAnts::Misc::install_misc_on_object
 
 module SheepDog
 
@@ -14,7 +14,7 @@ module SheepDog
 
       # Execute the monitoring process for a given configuration
       #
-      # Parameters:
+      # Parameters::
       # * *iConf* (<em>map<Symbol,Object></em>): The monitor configuration
       def execute(iConf)
         # Get the list of processes
@@ -50,7 +50,7 @@ module SheepDog
           # Maybe we want to execute something
           if (iConf.has_key?(:ExecuteIfMissing))
             report "Missing process. Executing \"#{iConf[:ExecuteIfMissing][:CmdLine]}\" from \"#{iConf[:ExecuteIfMissing][:Pwd]}\":"
-            changeDir(iConf[:ExecuteIfMissing][:Pwd]) do
+            change_dir(iConf[:ExecuteIfMissing][:Pwd]) do
               report `#{iConf[:ExecuteIfMissing][:CmdLine]}`
             end
           end
@@ -100,9 +100,9 @@ module SheepDog
 
       # Get metrics of a PID
       #
-      # Parameters:
+      # Parameters::
       # * *iPID* (_Integer_): The PID to get metrics from
-      # Return:
+      # Return::
       # * _Float_: The CPU percentage
       # * _Float_: The mem percentage
       # * _Integer_: The total virtual memory size

@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2011 Muriel Salvan (murielsalvan@users.sourceforge.net)
+# Copyright (c) 2011 - 2012 Muriel Salvan (muriel@x-aeon.com)
 # Licensed under the terms specified in LICENSE file. No warranty is provided.
 #++
 
@@ -11,7 +11,7 @@ module SheepDog
 
       # Send notifications for a given list of reports.
       #
-      # Parameters:
+      # Parameters::
       # * *iConf* (<em>map<Symbol,Object></em>): The notifier config
       # * *iLstReports* (<em>list<Report></em>): List of reports to notify
       def sendNotification(iConf, iLstReports)

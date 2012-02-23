@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2011 Muriel Salvan (murielsalvan@users.sourceforge.net)
+# Copyright (c) 2011 - 2012 Muriel Salvan (muriel@x-aeon.com)
 # Licensed under the terms specified in LICENSE file. No warranty is provided.
 #++
 
@@ -16,14 +16,14 @@ module SheepDog
     def initialize
       # Parse plugins
       require 'rUtilAnts/Plugins'
-      RUtilAnts::Plugins::initializePlugins
-      parsePluginsFromDir('Notifiers', "#{File.expand_path(File.dirname(__FILE__))}/Notifiers", 'SheepDog::Notifiers')
-      parsePluginsFromDir('Monitors', "#{File.expand_path(File.dirname(__FILE__))}/Monitors", 'SheepDog::Monitors')
+      RUtilAnts::Plugins::install_plugins_on_object
+      parse_plugins_from_dir('Notifiers', "#{File.expand_path(File.dirname(__FILE__))}/Notifiers", 'SheepDog::Notifiers')
+      parse_plugins_from_dir('Monitors', "#{File.expand_path(File.dirname(__FILE__))}/Monitors", 'SheepDog::Monitors')
     end
 
     # Execute a given configuration
     #
-    # Parameters:
+    # Parameters::
     # * *iConf* (<em>map<Symbol,Object></em>): The sheep dog configuration
     def execute(iConf)
       # Get the local database, storing dates of last reports sent...
@@ -54,10 +54,10 @@ module SheepDog
         if ((iMonitorInfo[:Conditions] == nil) or
             (checkConditions(iMonitorInfo[:Conditions])))
           # Check that it is a known monitor, by accessing the plugin
-          lMonitorPluginInstance, lError = getPluginInstance('Monitors', iMonitorInfo[:Type])
+          lMonitorPluginInstance, lError = get_plugin_instance('Monitors', iMonitorInfo[:Type])
           if (lMonitorPluginInstance == nil)
             # Unknown monitor
-            logErr "Unknown Monitor #{iMonitorInfo[:Type]}: #{lError}. Ignoring corresponding monitoring process. Please check configuration."
+            log_err "Unknown Monitor #{iMonitorInfo[:Type]}: #{lError}. Ignoring corresponding monitoring process. Please check configuration."
           else
             # Create the report to be filled by this process
             lReport = Report.new
@@ -71,19 +71,19 @@ module SheepDog
             if (!lMonitorPluginInstance.respond_to?(:report))
               # Report an entry
               #
-              # Parameters:
+              # Parameters::
               # * *iEntry* (_String_): Entry to be reported
               def lMonitorPluginInstance.report(iEntry)
                 @Report.addEntry(iEntry)
-                logInfo "Report: #{iEntry}"
+                log_info "Report: #{iEntry}"
               end
             end
             # Call this monitor
             begin
-              logInfo "Executing monitoring process #{iMonitorName} ..."
+              log_info "Executing monitoring process #{iMonitorName} ..."
               lMonitorPluginInstance.execute(iMonitorInfo)
             rescue Exception
-              logErr "Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
+              log_err "Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
               report "!!! Exception while executing monitor #{iMonitorName}: #{$!}.\n#{$!.backtrace.join("\n")}"
             end
             # If this report is not empty, save it in a file
@@ -102,7 +102,7 @@ module SheepDog
             Dir.glob("#{lMonitorDir}/Report_*").each do |iReportFile|
               lMatch = File.basename(iReportFile).match(/^Report_(\d\d\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)$/)
               if (lMatch == nil)
-                logErr "Invalid file report name: #{iReportFile}. Ignoring it."
+                log_err "Invalid file report name: #{iReportFile}. Ignoring it."
               else
                 lReportFiles[Time.parse("#{lMatch[1]}-#{lMatch[2]}-#{lMatch[3]} #{lMatch[4]}:#{lMatch[5]}:#{lMatch[6]} UTC")] = iReportFile
               end
@@ -208,7 +208,7 @@ module SheepDog
       end
       # Log reports to be sent delayed
       lDelayedReports.keys.each do |iReportFileName|
-        logInfo "Report to be sent later: #{iReportFileName}"
+        log_info "Report to be sent later: #{iReportFileName}"
       end
 
       # Write back database
@@ -221,9 +221,9 @@ module SheepDog
 
     # Check conditions
     #
-    # Parameters:
+    # Parameters::
     # * *iConditions* (<em>map<Symbol,Object></em>): The conditions to check
-    # Return:
+    # Return::
     # * _Boolean_: Are the conditions respected ?
     def checkConditions(iConditions)
       rPassed = true
@@ -248,17 +248,17 @@ module SheepDog
 
     # Process notifications to be sent.
     #
-    # Parameters:
+    # Parameters::
     # * *iConf* (<em>map<Symbol,Object></em>): SheepDog config
-    # * *iNotificationsInfo* (<em>map<NotifierName,map<MonitorName,list<[NotifierConf,list<ReportFileName>]>>></em>): The list of report files to send along with their notifier config, per monitor name, per notifier name
+    # * *iNotificationsInfo* (<em>map<NotifierName,map<MonitorName,list< [NotifierConf,list<ReportFileName>] >>></em>): The list of report files to send along with their notifier config, per monitor name, per notifier name
     # * *ioErrorReports* (<em>map<ReportFileName,nil></em>): The set of report file names that could not be sent through notifications
     def notify(iConf, iNotificationsInfo, ioErrorReports)
       iNotificationsInfo.each do |iNotifierName, iNotifierNotificationsInfo|
         # Find this notifier
         if (iConf[:Notifiers][iNotifierName] == nil)
-          logErr "Unknown notifier named #{iNotifierName}. Ignoring notifications to be sent there. Please check configuration."
+          log_err "Unknown notifier named #{iNotifierName}. Ignoring notifications to be sent there. Please check configuration."
         else
-          accessPlugin('Notifiers', iConf[:Notifiers][iNotifierName][:Type]) do |iNotifierPlugin|
+          access_plugin('Notifiers', iConf[:Notifiers][iNotifierName][:Type]) do |iNotifierPlugin|
             # List of reports to send through this notifier
             # list< Report >
             lLstReports = []
@@ -273,7 +273,7 @@ module SheepDog
                   begin
                     lReport = Marshal.load(File.read(iReportFileName))
                   rescue Exception
-                    logErr "Invalid report stored in file #{iReportFileName}: #{$!}.\n#{$!.backtrace.join("\n")}"
+                    log_err "Invalid report stored in file #{iReportFileName}: #{$!}.\n#{$!.backtrace.join("\n")}"
                     ioErrorReports[iReportFileName] = nil
                     lReport = nil
                   end
@@ -289,10 +289,10 @@ module SheepDog
               end
             end
             begin
-              logInfo "===== Send notification to #{iNotifierName} of #{lLstReports.size} reports..."
+              log_info "===== Send notification to #{iNotifierName} of #{lLstReports.size} reports..."
               iNotifierPlugin.sendNotification(iConf[:Notifiers][iNotifierName], lLstReports)
             rescue Exception
-              logErr "Exception while sending notification from #{iNotifierName} for reports #{lReportFilesSet.keys.join(', ')}: #{$!}.\n#{$!.backtrace.join("\n")}"
+              log_err "Exception while sending notification from #{iNotifierName} for reports #{lReportFilesSet.keys.join(', ')}: #{$!}.\n#{$!.backtrace.join("\n")}"
               ioErrorReports.merge!(lReportFilesSet)
             end
           end
@@ -302,15 +302,15 @@ module SheepDog
 
     # Get the number of seconds defined in a configuration
     #
-    # Parameters:
+    # Parameters::
     # * *iConf* (<em>map<Symbol,Object></em>): The configuration
-    # Return:
+    # Return::
     # * _Fixnum_: The number of seconds
     def getSecsInterval(iConf)
       if (iConf[:Interval_Secs] != nil)
         return iConf[:Interval_Secs]
       else
-        logErr "Unable to decode interval from #{iConf.inspect}"
+        log_err "Unable to decode interval from #{iConf.inspect}"
         return 0
       end
     end

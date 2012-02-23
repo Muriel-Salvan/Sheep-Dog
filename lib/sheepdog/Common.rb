@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2011 Muriel Salvan (murielsalvan@users.sourceforge.net)
+# Copyright (c) 2011 - 2012 Muriel Salvan (muriel@x-aeon.com)
 # Licensed under the terms specified in LICENSE file. No warranty is provided.
 #++
 
@@ -10,9 +10,9 @@ module SheepDog
     # Convert a string representing a memory quantity to its integer value.
     # Useful to decode top output, that uses k and m for its quantities.
     #
-    # Parameters:
+    # Parameters::
     # * *iStrValue* (_String_): The value as a string
-    # Return:
+    # Return::
     # * _Integer_: Corresponding value
     def quantity2Int(iStrValue)
       rResult = nil

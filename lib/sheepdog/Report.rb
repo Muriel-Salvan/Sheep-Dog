@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2011 Muriel Salvan (murielsalvan@users.sourceforge.net)
+# Copyright (c) 2011 - 2012 Muriel Salvan (muriel@x-aeon.com)
 # Licensed under the terms specified in LICENSE file. No warranty is provided.
 #++
 
@@ -30,7 +30,7 @@ module SheepDog
 
     # Add an entry to the report
     #
-    # Parameters:
+    # Parameters::
     # * *iEntry* (_String_): Entry to be added
     def addEntry(iEntry)
       @Entries << iEntry
@@ -38,7 +38,7 @@ module SheepDog
 
     # Set the report's title
     #
-    # Parameters:
+    # Parameters::
     # * *iTitle* (_String_): Report's title
     def setTitle(iTitle)
       @Title = iTitle
@@ -46,7 +46,7 @@ module SheepDog
 
     # Set the report's file name
     #
-    # Parameters:
+    # Parameters::
     # * *iFileName* (_String_): Report's file name
     def setReportFileName(iFileName)
       @ReportFileName = iFileName
@@ -54,7 +54,7 @@ module SheepDog
 
     # Get the report as simple text
     #
-    # Return:
+    # Return::
     # * _String_: The report as simple text
     def getSimpleText
       return @Entries.join("\n")
@@ -62,7 +62,7 @@ module SheepDog
 
     # Is this report empty ?
     #
-    # Return:
+    # Return::
     # * _Boolean_: Is this report empty ?
     def empty?
       return @Entries.empty?

@@ -1,10 +1,10 @@
 #--
-# Copyright (c) 2011 Muriel Salvan (murielsalvan@users.sourceforge.net)
+# Copyright (c) 2011 - 2012 Muriel Salvan (muriel@x-aeon.com)
 # Licensed under the terms specified in LICENSE file. No warranty is provided.
 #++
 
 require 'rUtilAnts/Misc'
-RUtilAnts::Misc::initializeMisc
+RUtilAnts::Misc::install_misc_on_object
 
 module SheepDog
 
@@ -16,7 +16,7 @@ module SheepDog
 
       # Execute the monitoring process for a given configuration
       #
-      # Parameters:
+      # Parameters::
       # * *iConf* (<em>map<Symbol,Object></em>): The monitor configuration
       def execute(iConf)
         lLstTopOutput = `top -b -p0 -n1 | head -4`.split("\n").map { |iLine| iLine.strip }
