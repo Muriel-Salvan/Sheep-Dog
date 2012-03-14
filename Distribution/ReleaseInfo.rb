@@ -37,7 +37,10 @@ RubyPackager::ReleaseInfo.new.
     :gem_name => 'SheepDog',
     :gem_platform_class_name => 'Gem::Platform::RUBY',
     :require_path => 'lib',
-    :has_rdoc => true
+    :has_rdoc => true,
+    :gem_dependencies => [
+      [ 'rUtilAnts', '>= 1.0' ]
+    ],
 #    :test_file => 'test/run.rb'
   ).
   source_forge(
