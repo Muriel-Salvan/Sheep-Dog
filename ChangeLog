@@ -1,4 +1,25 @@
-= StatsCollect Release History
+= SheepDog Release History
+
+== 0.2.0.20120314 (Alpha)
+
+* Added rUtilAnts dependency in the release file.
+* Adapted release info to last version of Ruby Packager.
+* Removed rdoc warning in documentation.
+* Adapted to Ruby's standard conventions.
+* Updated Copyright information.
+* Updated email address of Muriel Salvan.
+* Adapted comments to match a better RDoc syntax.
+* Adapted to new version of rUtilAnts.
+* Adding possibility to add conditions to monitors.
+* Added a common file that can define common methods.
+* Added Monitors/Top to monitor global values returned by top command (configuration example file modified).
+* Monitors/LogFile: Increased robustness in case of a previous SheepDog crash.
+* Monitors/LogFile: Added possibility to not specify a filter in logs parsing.
+* Monitors/Process: Added possibility to monitor resident memory per process (example configuration file updated).
+* Bug correction: Notifiers/SendMail: Multi reports were sending only the last report.
+* Bug correction: Notifiers/StdOut: Multi reports were sending only the last report.
+* Bug correction: Notifiers/SendMail: Notifications could not be sent when grouped.
+* Bug correction: Notifiers/StdOut: Notifications could not be sent when grouped.
 
 == 0.1.0.20110705 (Alpha)
 

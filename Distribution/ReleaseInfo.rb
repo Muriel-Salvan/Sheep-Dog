@@ -40,12 +40,13 @@ RubyPackager::ReleaseInfo.new.
     :has_rdoc => true,
     :gem_dependencies => [
       [ 'rUtilAnts', '>= 1.0' ]
-    ],
+    ]
 #    :test_file => 'test/run.rb'
   ).
   source_forge(
     :login => 'murielsalvan',
-    :project_unix_name => 'sheepdogsys'
+    :project_unix_name => 'sheepdogsys',
+    :ask_for_key_passphrase => true
   ).
   ruby_forge(
     :project_unix_name => 'sheepdogsys'
