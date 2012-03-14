@@ -5,27 +5,27 @@
 
 RubyPackager::ReleaseInfo.new.
   author(
-    :Name => 'Muriel Salvan',
-    :EMail => 'muriel@x-aeon.com',
-    :WebPageURL => 'http://murielsalvan.users.sourceforge.net'
+    :name => 'Muriel Salvan',
+    :email => 'muriel@x-aeon.com',
+    :web_page_url => 'http://murielsalvan.users.sourceforge.net'
   ).
   project(
-    :Name => 'Sheep Dog',
-    :WebPageURL => 'http://sheepdogsys.sourceforge.net/',
-    :Summary => 'System administration helper to monitor files and processes.',
-    :Description => 'Simple command line tool that monitors files and processes and sends notifications or take corrective actions when problems arise. Monitor log files for errors, processes CPU and memory consumption (can kill if exceeding), respawn dead processes.',
-    :ImageURL => 'http://sheepdogsys.sourceforge.net/wiki/images/c/c9/Logo.png',
-    :FaviconURL => 'http://sheepdogsys.sourceforge.net/wiki/images/2/26/Favicon.png',
-    :SVNBrowseURL => 'http://sheepdogsys.git.sourceforge.net/',
-    :DevStatus => 'Alpha'
+    :name => 'Sheep Dog',
+    :web_page_url => 'http://sheepdogsys.sourceforge.net/',
+    :summary => 'System administration helper to monitor files and processes.',
+    :description => 'Simple command line tool that monitors files and processes and sends notifications or take corrective actions when problems arise. Monitor log files for errors, processes CPU and memory consumption (can kill if exceeding), respawn dead processes.',
+    :image_url => 'http://sheepdogsys.sourceforge.net/wiki/images/c/c9/Logo.png',
+    :favicon_url => 'http://sheepdogsys.sourceforge.net/wiki/images/2/26/Favicon.png',
+    :browse_source_url => 'http://sheepdogsys.git.sourceforge.net/',
+    :dev_status => 'Alpha'
   ).
-  addCoreFiles( [
+  add_core_files( [
     '{lib,bin}/**/*'
   ] ).
-#  addTestFiles( [
+#  add_test_files( [
 #    'test/**/*'
 #  ] ).
-  addAdditionalFiles( [
+  add_additional_files( [
     'README',
     'LICENSE',
     'AUTHORS',
@@ -34,19 +34,19 @@ RubyPackager::ReleaseInfo.new.
     '*.example'
   ] ).
   gem(
-    :GemName => 'SheepDog',
-    :GemPlatformClassName => 'Gem::Platform::RUBY',
-    :RequirePath => 'lib',
-    :HasRDoc => true
-#    :TestFile => 'test/run.rb'
+    :gem_name => 'SheepDog',
+    :gem_platform_class_name => 'Gem::Platform::RUBY',
+    :require_path => 'lib',
+    :has_rdoc => true
+#    :test_file => 'test/run.rb'
   ).
-  sourceForge(
-    :Login => 'murielsalvan',
-    :ProjectUnixName => 'sheepdogsys'
+  source_forge(
+    :login => 'murielsalvan',
+    :project_unix_name => 'sheepdogsys'
   ).
-  rubyForge(
-    :ProjectUnixName => 'sheepdogsys'
+  ruby_forge(
+    :project_unix_name => 'sheepdogsys'
   ).
   executable(
-    :StartupRBFile => 'bin/sheepdog.rb'
+    :startup_rb_file => 'bin/sheepdog.rb'
   )
